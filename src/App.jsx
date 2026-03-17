@@ -338,7 +338,7 @@ function Overlay() {
         
         {/* Holographic Image Display (Left) */}
         <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
-          <HolographicDisplay imageSrc="/minsa-lab.png" altText="MINSA LAB Dashboard" color="#ff003c" />
+          <HolographicDisplay imageSrc={`${import.meta.env.BASE_URL}minsa-lab.png`} altText="MINSA LAB Dashboard" color="#ff003c" />
         </div>
 
         {/* Text Details (Right) */}
@@ -382,7 +382,7 @@ function Overlay() {
         
         {/* Holographic Image Display (Left) */}
         <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
-          <HolographicDisplay imageSrc="/ai-agents.png" altText="AI Agents Analytics" color="#00f0ff" />
+          <HolographicDisplay imageSrc={`${import.meta.env.BASE_URL}ai-agents.png`} altText="AI Agents Analytics" color="#00f0ff" />
         </div>
 
         {/* Text Details (Right) */}
@@ -426,7 +426,7 @@ function Overlay() {
         
         {/* Holographic Image Display (Left) */}
         <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
-          <HolographicDisplay imageSrc="/modern-landings.png" altText="Modern Landing UI" color="#fcee0a" />
+          <HolographicDisplay imageSrc={`${import.meta.env.BASE_URL}modern-landings.png`} altText="Modern Landing UI" color="#fcee0a" />
         </div>
 
         {/* Text Details (Right) */}
@@ -470,7 +470,7 @@ function Overlay() {
         
         {/* Holographic Image Display (Left) */}
         <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
-          <HolographicDisplay imageSrc="/cross-platform.png" altText="Cross-Platform Architecture" color="#ff003c" hideWatermark={true} />
+          <HolographicDisplay imageSrc={`${import.meta.env.BASE_URL}cross-platform.png`} altText="Cross-Platform Architecture" color="#ff003c" hideWatermark={true} />
         </div>
 
         {/* Text Details (Right) */}
