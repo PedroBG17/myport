@@ -148,6 +148,92 @@ const FadeUp = ({ children, delay = 0, className = "" }) => (
   </motion.div>
 );
 
+// --- HOLOGRAPHIC IMAGE COMPONENT ---
+const HolographicDisplay = ({ imageSrc, altText, color, hideWatermark = false }) => {
+  const cardRef = useRef(null);
+  const containerRef = useRef(null);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // For 3D Tilt
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -15;
+    const rotateY = ((x - centerX) / centerX) * 15;
+
+    // For Magnifier Zoom
+    const percentX = (x / rect.width) * 100;
+    const percentY = (y / rect.height) * 100;
+    setMousePos({ x: percentX, y: percentY });
+
+    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+  };
+
+  return (
+    <FadeUp delay={0.4} className="w-full relative group perspective-1000">
+      <div 
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative w-full aspect-video p-2 md:p-6 flex items-center justify-center cursor-none"
+      >
+        <div
+          ref={cardRef}
+          className="relative w-full h-full border border-white/10 cyber-panel overflow-hidden transition-transform duration-200 ease-out"
+          style={{ boxShadow: `0 0 30px ${color}20` }}
+        >
+          {/* Holographic layer */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent z-10 pointer-events-none mix-blend-overlay opacity-50 duration-500 group-hover:opacity-100" />
+          
+          {/* Image with Magnifier Zoom logic */}
+          <div
+            className={`absolute inset-0 w-full h-full transition-all duration-700 ease-out ${hideWatermark ? 'scale-110 origin-center' : ''}`}
+            style={{
+              backgroundImage: `url(${imageSrc})`,
+              backgroundPosition: isHovered ? `${mousePos.x}% ${mousePos.y}%` : 'center',
+              backgroundSize: isHovered ? '250%' : 'cover',
+              backgroundRepeat: 'no-repeat'
+            }}
+            title={altText}
+          />
+
+          {/* Scanlines over image */}
+          <div className="absolute inset-0 z-20 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)' }}></div>
+
+          {/* Framing Corners */}
+          <div className={`absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 z-30 pointer-events-none transition-all duration-500 group-hover:w-12 group-hover:h-12`} style={{ borderColor: color }}></div>
+          <div className={`absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 z-30 pointer-events-none transition-all duration-500 group-hover:w-12 group-hover:h-12`} style={{ borderColor: color }}></div>
+          
+          {/* Status Tag */}
+          <div className="absolute bottom-4 left-4 z-30 bg-black/80 backdrop-blur-md border px-3 py-1.5 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300" style={{ borderColor: `${color}40` }}>
+            <span className="font-mono text-[10px] text-white uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_currentColor]" style={{ backgroundColor: color, color: color }}></span>
+              VISTA_EN_TIEMPO_REAL
+            </span>
+          </div>
+        </div>
+      </div>
+    </FadeUp>
+  );
+};
+
 // --- CONTACT UPLINK INTERFACE ---
 function ContactUplink() {
   const [activeMenu, setActiveMenu] = useState('MAIN'); // 'MAIN', 'EMAIL'
@@ -248,8 +334,15 @@ function Overlay() {
       </section>
 
       {/* Page 2 (20-40%) - Project: MINSA */}
-      <section className="h-screen w-full flex flex-col items-end justify-center px-6 md:px-[6vw]">
-        <div className="max-w-3xl text-right pointer-events-auto z-10 w-full pt-20">
+      <section className="h-screen w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-[6vw] gap-10">
+        
+        {/* Holographic Image Display (Left) */}
+        <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
+          <HolographicDisplay imageSrc="/minsa-lab.png" altText="MINSA LAB Dashboard" color="#ff003c" />
+        </div>
+
+        {/* Text Details (Right) */}
+        <div className="max-w-2xl text-right pointer-events-auto z-10 w-full md:w-[50%] pt-10 md:pt-20">
           <FadeUp>
             <div className="inline-block border border-cyber-magenta text-cyber-magenta px-2 py-0.5 text-[10px] font-mono mb-2 bg-[#ff003c]/10">
               ID_FRAGMENTO: MINSA_LAB
@@ -258,26 +351,26 @@ function Overlay() {
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-body-lg text-cyber-light/80 mb-16 max-w-lg ml-auto font-mono">
+            <p className="text-body-lg text-cyber-light/80 mb-10 max-w-lg ml-auto font-mono">
               Plataforma web on-premise para ingesta de datos y generación de reportes estadísticos. Arquitectura construida bajo estrictos estándares de código limpio y optimización de rendimiento.
             </p>
           </FadeUp>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 border-t border-cyber-magenta/30 pt-8 text-left">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4 border-t border-cyber-magenta/30 pt-8 text-left">
             <FadeUp delay={0.3}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">0</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">0</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Brechas<br />Registradas</p>
             </FadeUp>
             <FadeUp delay={0.4}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">99.9%</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">99.9%</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Uptime<br />Garantizado</p>
             </FadeUp>
             <FadeUp delay={0.5}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-cyber-yellow">-40%</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-cyber-yellow">-40%</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Respuesta<br />de Búsqueda</p>
             </FadeUp>
             <FadeUp delay={0.6}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">IA</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">IA</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Chatbot<br />Analítico</p>
             </FadeUp>
           </div>
@@ -285,8 +378,15 @@ function Overlay() {
       </section>
 
       {/* Page 3 (40-60%) - Project: AI Agents */}
-      <section className="h-screen w-full flex flex-col items-start justify-center px-6 md:px-[6vw]">
-        <div className="max-w-3xl pointer-events-auto z-10 pt-20">
+      <section className="h-screen w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-[6vw] gap-10">
+        
+        {/* Holographic Image Display (Left) */}
+        <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
+          <HolographicDisplay imageSrc="/ai-agents.png" altText="AI Agents Analytics" color="#00f0ff" />
+        </div>
+
+        {/* Text Details (Right) */}
+        <div className="max-w-2xl text-right pointer-events-auto z-10 w-full md:w-[50%] pt-10 md:pt-20">
           <FadeUp>
             <div className="inline-block border border-cyber-cyan text-cyber-cyan px-2 py-0.5 text-[10px] font-mono mb-2 bg-[#00f0ff]/10">
               ID_FRAGMENTO: AI_AGENTS
@@ -295,26 +395,26 @@ function Overlay() {
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-body-lg text-cyber-light/80 mb-16 max-w-lg mr-auto font-mono">
+            <p className="text-body-lg text-cyber-light/80 mb-10 max-w-lg ml-auto font-mono">
               Autómatas corporativos desplegados (LLMs). Cadenas de agentes diseñadas para usurpar tareas manuales, decodificar APIs e inyectar rutinas algorítmicas autónomas.
             </p>
           </FadeUp>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 border-t border-cyber-cyan/30 pt-8 text-left">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4 border-t border-cyber-cyan/30 pt-8 text-left">
             <FadeUp delay={0.3}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">&gt;1M</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">&gt;1M</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Tokens<br />Inyectados</p>
             </FadeUp>
             <FadeUp delay={0.4}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">-85%</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">-85%</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Intervención<br />Manual</p>
             </FadeUp>
             <FadeUp delay={0.5}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">&lt;1s</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">&lt;1s</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Latencia<br />Media</p>
             </FadeUp>
             <FadeUp delay={0.6}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">RAG</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">RAG</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Arquitectura<br />Base</p>
             </FadeUp>
           </div>
@@ -322,8 +422,15 @@ function Overlay() {
       </section>
 
       {/* Page 4 (60-80%) - Project: Landing Pages */}
-      <section className="h-screen w-full flex flex-col items-end justify-center px-6 md:px-[6vw]">
-        <div className="max-w-3xl text-right pointer-events-auto z-10 w-full pt-20">
+      <section className="h-screen w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-[6vw] gap-10">
+        
+        {/* Holographic Image Display (Left) */}
+        <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
+          <HolographicDisplay imageSrc="/modern-landings.png" altText="Modern Landing UI" color="#fcee0a" />
+        </div>
+
+        {/* Text Details (Right) */}
+        <div className="max-w-2xl text-right pointer-events-auto z-10 w-full md:w-[50%] pt-10 md:pt-20">
           <FadeUp>
             <div className="inline-block border border-cyber-yellow text-cyber-yellow px-2 py-0.5 text-[10px] font-mono mb-2 bg-[#fcee0a]/10">
               ID_FRAGMENTO: UI_RENDER
@@ -332,26 +439,26 @@ function Overlay() {
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-body-lg text-cyber-light/80 mb-16 max-w-lg ml-auto font-mono">
+            <p className="text-body-lg text-cyber-light/80 mb-10 max-w-lg ml-auto font-mono">
               Construcción de interfaces cinemáticas de ultra-alta conversión. Compilación de arquitecturas frontend isomórficas (SSR/SSG) integradas con WebGL para aceleración gráfica por GPU y cálculos de topología fluida orientada al engagement.
             </p>
           </FadeUp>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 border-t border-cyber-yellow/30 pt-8 text-left">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4 border-t border-cyber-yellow/30 pt-8 text-left">
             <FadeUp delay={0.3}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">60FPS</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">60FPS</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Tasa de<br />Renderizado</p>
             </FadeUp>
             <FadeUp delay={0.4}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">100%</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">100%</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Auditoría<br />Lighthouse</p>
             </FadeUp>
             <FadeUp delay={0.5}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">+300%</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">+300%</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Retención<br />de Usuario</p>
             </FadeUp>
             <FadeUp delay={0.6}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">DX</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">DX</p>
               <p className="text-[10px] text-cyber-cyan font-mono uppercase tracking-widest leading-relaxed">Ecosistema<br />Modular</p>
             </FadeUp>
           </div>
@@ -359,8 +466,15 @@ function Overlay() {
       </section>
 
       {/* Page 5 (80-100%) - Project: Multiplatform Apps */}
-      <section className="h-screen w-full flex flex-col items-start justify-center px-6 md:px-[6vw]">
-        <div className="max-w-3xl pointer-events-auto z-10 pt-20">
+      <section className="h-screen w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-[6vw] gap-10">
+        
+        {/* Holographic Image Display (Left) */}
+        <div className="w-full md:w-[45%] pointer-events-auto z-10 mt-20 md:mt-0">
+          <HolographicDisplay imageSrc="/cross-platform.png" altText="Cross-Platform Architecture" color="#ff003c" hideWatermark={true} />
+        </div>
+
+        {/* Text Details (Right) */}
+        <div className="max-w-2xl text-right pointer-events-auto z-10 w-full md:w-[50%] pt-10 md:pt-20">
           <FadeUp>
             <div className="inline-block border border-cyber-magenta text-cyber-magenta px-2 py-0.5 text-[10px] font-mono mb-2 bg-[#ff003c]/10">
               ID_FRAGMENTO: CROSS_PLATFORM
@@ -369,26 +483,26 @@ function Overlay() {
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-body-lg text-cyber-light/80 mb-16 max-w-lg mr-auto font-mono">
+            <p className="text-body-lg text-cyber-light/80 mb-10 max-w-lg ml-auto font-mono">
               Despliegue de software nativo para arquitecturas móviles (iOS/Android) y ecosistemas de escritorio (PC/Mac). Compilación binaria unificada mediante frameworks híbridos, garantizando paridad de rendimiento y acceso de bajo nivel al hardware del nodo final.
             </p>
           </FadeUp>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 border-t border-cyber-magenta/30 pt-8 text-left">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4 border-t border-cyber-magenta/30 pt-8 text-left">
             <FadeUp delay={0.3}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">1 Code</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">1 Code</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Múltiples<br />Nodos</p>
             </FadeUp>
             <FadeUp delay={0.4}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">Nat</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">Nat</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Compilación<br />Nativa</p>
             </FadeUp>
             <FadeUp delay={0.5}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">&lt;10ms</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-cyber-magenta">&lt;10ms</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Latencia<br />I/O</p>
             </FadeUp>
             <FadeUp delay={0.6}>
-              <p className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 text-white">GPU</p>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-2 text-white">GPU</p>
               <p className="text-[10px] text-cyber-yellow font-mono uppercase tracking-widest leading-relaxed">Hardware<br />Acelerado</p>
             </FadeUp>
           </div>
