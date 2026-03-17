@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import emailjs from '@emailjs/browser';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Preload, useScroll, ScrollControls, Scroll, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
@@ -235,13 +236,51 @@ const HolographicDisplay = ({ imageSrc, altText, color, hideWatermark = false })
 };
 
 // --- CONTACT UPLINK INTERFACE ---
+// EmailJS credentials - replace with your actual values from emailjs.com
+const EMAILJS_SERVICE_ID = "service_rgwhbri";
+const EMAILJS_TEMPLATE_ID = "template_tt29ltw";
+const EMAILJS_PUBLIC_KEY = "b9vwMZsB9mRgihgV8";
+
 function ContactUplink() {
   const [activeMenu, setActiveMenu] = useState('MAIN'); // 'MAIN', 'EMAIL'
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState('idle'); // 'idle' | 'sending' | 'success' | 'error'
+  const formRef = useRef(null);
 
   const handleWhatsApp = () => {
     const phoneNumber = "51932833777";
     const message = encodeURIComponent("¡Hola Pedro! Vi tu portafolio cibernético y me gustaría ponernos en contacto.");
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) return;
+    setStatus('sending');
+    try {
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+          to_email: 'darkpedro020@gmail.com',
+        },
+        EMAILJS_PUBLIC_KEY
+      );
+      setStatus('success');
+      setFormData({ name: '', email: '', message: '' });
+      setTimeout(() => setStatus('idle'), 4000);
+    } catch (err) {
+      console.error('EmailJS error:', err);
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
   };
 
   return (
@@ -268,7 +307,7 @@ function ContactUplink() {
                 <span className="font-mono text-sm group-hover:drop-shadow-[0_0_10px_white]">WHATSAPP_LINK</span>
               </button>
 
-              <button onClick={() => setActiveMenu('EMAIL')} className="magnetic-btn hover-trigger w-full flex items-center justify-center gap-2 !bg-cyber-cyan !text-black hover:!text-white border-none group">
+              <button onClick={() => { setActiveMenu('EMAIL'); setStatus('idle'); }} className="magnetic-btn hover-trigger w-full flex items-center justify-center gap-2 !bg-cyber-cyan !text-black hover:!text-white border-none group">
                 <span className="font-mono text-sm group-hover:drop-shadow-[0_0_10px_white]">SMTP_PROTOCOLO</span>
               </button>
             </div>
@@ -289,15 +328,89 @@ function ContactUplink() {
               <button onClick={() => setActiveMenu('MAIN')} className="text-[10px] font-mono hover:text-cyber-magenta transition-colors hover-trigger cursor-none uppercase">&lt; ABORTAR</button>
             </div>
 
-            <form className="flex flex-col gap-4">
-              <input type="text" className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none" placeholder="ID_NODO // NOMBRE" />
-              <input type="email" className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none" placeholder="ENRUTAMIENTO // CORREO" />
-              <textarea rows="3" className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none resize-none" placeholder="CARGA_ÚTIL // MENSAJE"></textarea>
+            <AnimatePresence mode="wait">
+              {status === 'success' ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center gap-4 py-8"
+                >
+                  <div className="w-16 h-16 border-2 border-cyber-cyan flex items-center justify-center">
+                    <svg className="w-8 h-8 text-cyber-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="font-mono text-cyber-cyan text-sm uppercase tracking-widest text-center">TRANSMISIÓN_EXITOSA</p>
+                  <p className="font-mono text-white/50 text-xs text-center">Mensaje recibido. Responderé en breve.</p>
+                </motion.div>
+              ) : status === 'error' ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center gap-4 py-8"
+                >
+                  <div className="w-16 h-16 border-2 border-cyber-magenta flex items-center justify-center">
+                    <svg className="w-8 h-8 text-cyber-magenta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <p className="font-mono text-cyber-magenta text-sm uppercase tracking-widest text-center">ERROR_DE_TRANSMISIÓN</p>
+                  <p className="font-mono text-white/50 text-xs text-center">Intenta de nuevo o usa WhatsApp.</p>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  ref={formRef}
+                  onSubmit={handleSubmit}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col gap-4"
+                >
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none"
+                    placeholder="ID_NODO // NOMBRE"
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none"
+                    placeholder="ENRUTAMIENTO // CORREO"
+                  />
+                  <textarea
+                    rows="3"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    className="bg-transparent border border-cyber-cyan/30 p-3 w-full text-sm font-mono text-white focus:outline-none focus:border-cyber-cyan focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] transition-all cursor-none resize-none"
+                    placeholder="CARGA_ÚTIL // MENSAJE"
+                  ></textarea>
 
-              <button type="button" className="magnetic-btn w-full mt-2 hover-trigger !py-3">
-                <span className="text-sm">TRANSMITIR_DATOS</span>
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    disabled={status === 'sending'}
+                    className="magnetic-btn w-full mt-2 hover-trigger !py-3 disabled:opacity-50 disabled:cursor-wait"
+                  >
+                    <span className="text-sm">
+                      {status === 'sending' ? 'TRANSMITIENDO...' : 'TRANSMITIR_DATOS'}
+                    </span>
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
