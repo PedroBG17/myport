@@ -266,10 +266,9 @@ function ContactUplink() {
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
         {
-          from_name: formData.name,
-          from_email: formData.email,
-          message: formData.message,
-          to_email: 'darkpedro020@gmail.com',
+          name: formData.name,
+          email: formData.email,
+          title: formData.message,
         },
         EMAILJS_PUBLIC_KEY
       );
