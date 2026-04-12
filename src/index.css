@@ -1,14 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap');
-
 :root {
-  --bg-primary: #020208;
-  --cyber-cyan: #00f0ff;
-  --cyber-magenta: #ff003c;
-  --cyber-yellow: #fcee0a;
+  --color-bg:       #020202;
+  --color-accent-1: #CCFF00; /* Neon Lime */
+  --color-accent-2: #00FFFF; /* Neon Cyan */
+  --color-accent-3: #FF00FF; /* Neon Magenta */
+  
+  --neon-cyan-glow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.2);
+  --neon-magenta-glow: 0 0 10px rgba(255, 0, 255, 0.6), 0 0 20px rgba(255, 0, 255, 0.4), 0 0 30px rgba(255, 0, 255, 0.2);
+  --neon-lime-glow: 0 0 10px rgba(204, 255, 0, 0.6), 0 0 20px rgba(204, 255, 0, 0.4), 0 0 30px rgba(204, 255, 0, 0.2);
+
+  --color-text:     #EAEAEA;
+  --color-muted:    #8A8A8A;
+  --font-mono:      'Space Mono', monospace;
+  --font-display:   'Outfit', sans-serif;
+  
+  --fs-display:     clamp(56px, 10vw, 130px);
+  --fs-h1:          clamp(32px, 5vw, 64px);
+  --fs-h2:          clamp(20px, 3vw, 36px);
+  --fs-body:        16px;
+  --fs-label:       12px;
 }
 
 * {
@@ -19,16 +34,17 @@
 
 html, body, #root {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: var(--bg-primary);
-  color: #fff;
-  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -ms-overflow-style: none;
   scrollbar-width: none;
-  cursor: none; /* Hide default cursor */
+  cursor: none;
 }
 
 body::-webkit-scrollbar {
@@ -37,10 +53,35 @@ body::-webkit-scrollbar {
 
 /* Typography refinements */
 h1, h2, h3, .heading-display {
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-family: var(--font-display);
+  font-weight: 800; 
+  letter-spacing: -0.02em;
   line-height: 0.9;
+  text-transform: uppercase;
 }
+.text-label {
+  font-size: var(--fs-label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Neo-Brutal & Cyber Shadows */
+.cyber-box {
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(10, 10, 10, 0.5);
+}
+.cyber-box:hover {
+  border-color: var(--color-accent-2);
+  box-shadow: var(--neon-cyan-glow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-neon-cyan { text-shadow: var(--neon-cyan-glow); }
+.text-neon-lime { text-shadow: var(--neon-lime-glow); }
+.text-neon-magenta { text-shadow: var(--neon-magenta-glow); }
+
+/* Intersection Observer transitions removed to use pure GSAP ScrollTrigger */
 
 /* Subtle scanlines wrapper (optional, keep it clean) */
 .scanlines {
@@ -103,44 +144,47 @@ h1, h2, h3, .heading-display {
   position: relative;
   display: inline-flex;
   padding: 1.5rem 3rem;
-  background: var(--cyber-yellow);
-  color: #000;
-  font-family: 'Share Tech Mono', monospace;
-  font-weight: 800;
+  background: transparent;
+  border: 1px solid var(--color-accent-1);
+  color: var(--color-accent-1);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   overflow: hidden;
-  will-change: transform;
-  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  border: none;
-  transition: all 0.3s ease;
+  will-change: transform, box-shadow;
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .magnetic-btn span {
   position: relative;
   z-index: 2;
-  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: color 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .magnetic-btn::before {
   content: '';
   position: absolute;
   top: 100%; left: 0; width: 100%; height: 100%;
-  background: var(--cyber-magenta);
-  transform: scale(0);
-  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), top 0.4s ease;
+  background: var(--color-accent-1);
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
   z-index: 1;
 }
 
 .magnetic-btn:hover::before {
+  transform: scaleY(1.5);
   top: 0;
-  transform: scale(2);
 }
 
 .magnetic-btn:hover {
-  color: #fff;
-  box-shadow: 0 0 30px var(--cyber-magenta);
+  box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+}
+.magnetic-btn:hover span {
+  color: #000;
 }
 
 /* Glitch Effect strictly for Hero Title */
